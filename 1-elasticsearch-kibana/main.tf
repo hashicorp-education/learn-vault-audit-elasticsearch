@@ -86,14 +86,6 @@ resource "docker_container" "elasticsearch" {
     command = "docker exec -u 0 elasticsearch chown elasticsearch /usr/share/elasticsearch/config/users_roles"
   }
 
-  provisioner "local-exec" {
-    command = "docker cp elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../2-fleet-agent-bootstrap/cert/ca.pem"
-  }
-
-  provisioner "local-exec" {
-    command = "docker cp elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../3-enroll-elastic-agent/cert/ca.pem"
-  }
-
 }
 
 # -----------------------------------------------------------------------
@@ -119,6 +111,27 @@ resource "docker_container" "kibana" {
     external = "5601"
     protocol = "tcp"
   }
+
+}
+
+resource "null_resource" "util" {
+
+  // Copy the CA certificate to the necessary locations for subsequent steps
+  provisioner "local-exec" {
+    command = "sleep 10"
+  }
+
+  provisioner "local-exec" {
+    command = "docker cp elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../2-fleet-agent-bootstrap/cert/ca.pem"
+  }
+
+  provisioner "local-exec" {
+    command = "docker cp elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../3-enroll-elastic-agent/cert/ca.pem"
+  }
+
+  depends_on = [
+    docker_container.elasticsearch
+  ]
 
 }
 
