@@ -1,0 +1,7 @@
+vault/data
+vault/log
+.terraform
+.terraform.lock.hcl
+http_ca.crt
+terraform.tfstate
+terraform.tfstate.backup
