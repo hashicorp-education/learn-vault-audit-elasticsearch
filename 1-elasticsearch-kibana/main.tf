@@ -117,8 +117,9 @@ resource "docker_container" "kibana" {
 resource "null_resource" "util" {
 
   // Copy the CA certificate to the necessary locations for subsequent steps
+  // Need to sleep and wait for Elasticsearch container to settle.
   provisioner "local-exec" {
-    command = "sleep 10"
+    command = "sleep 15"
   }
 
   provisioner "local-exec" {
@@ -134,18 +135,3 @@ resource "null_resource" "util" {
   ]
 
 }
-
-# -----------------------------------------------------------------------
-# Kibana resources
-# -----------------------------------------------------------------------
-
-/*
-
-resource "fleet_service_token" "local_token" {
-
-  provisioner "local-exec" {
-    command = "(printf 'fleet_server_service_token='; curl -k -u \"elastic:${var.elastic_passwd}\" -s -X POST http://127.0.0.1:5601/api/fleet/service-tokens --header 'kbn-xsrf: true' | jq -r '.value') > token.auto.tfvars"
-  }
-}
-
-*/
