@@ -57,7 +57,7 @@ resource "docker_image" "elasticsearch" {
 resource "docker_container" "elasticsearch" {
   name  = "elasticsearch"
   image = docker_image.elasticsearch.repo_digest
-  env   = ["ELASTIC_PASSWORD=2learnVault", "KIBANA_PASSWORD=2learnVault"]
+  env   = ["discovery.type=single-node", "ES_JAVA_OPTS=-Xms1g -Xmx1g", "ELASTIC_PASSWORD=2learnVault", "KIBANA_PASSWORD=2learnVault"]
 
   ports {
     internal = "9200"
@@ -86,6 +86,13 @@ resource "docker_container" "elasticsearch" {
     command = "docker exec -u 0 elasticsearch chown elasticsearch /usr/share/elasticsearch/config/users_roles"
   }
 
+  healthcheck {
+    test     = ["CMD", "curl", "-f", "http://localhost:9200"]
+    interval = "5s"
+    timeout  = "2s"
+    retries  = 4
+  }
+
 }
 
 # -----------------------------------------------------------------------
@@ -112,6 +119,12 @@ resource "docker_container" "kibana" {
     protocol = "tcp"
   }
 
+  healthcheck {
+    test     = ["CMD", "curl", "-f", "http://localhost:5601"]
+    interval = "5s"
+    timeout  = "2s"
+    retries  = 4
+  }
 }
 
 resource "null_resource" "util" {
@@ -119,7 +132,7 @@ resource "null_resource" "util" {
   // Copy the CA certificate to the necessary locations for subsequent steps
   // Need to sleep and wait for Elasticsearch container to settle.
   provisioner "local-exec" {
-    command = "sleep 15"
+    command = "echo 'Waiting for Elasticsearch container';until $(curl --output /dev/null --silent --head --fail http://localhost:5601); do printf '.' sleep 5 done"
   }
 
   provisioner "local-exec" {

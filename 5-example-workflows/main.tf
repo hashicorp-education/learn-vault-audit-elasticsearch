@@ -22,8 +22,25 @@ variable "docker_host" {
 # Provider configuration
 # -----------------------------------------------------------------------
 
-provider "docker" {
-  host = var.docker_host
+# This provider is expected to be configured through the
+# following environment variables:
+#
+# VAULT_ADDR
+# VAULT_TOKEN
+
+provider "vault" {}
+
+# -----------------------------------------------------------------------
+# Audit Device Resources
+# -----------------------------------------------------------------------
+
+resource "vault_audit" "file_audit_device" {
+  type = "file"
+
+  options = {
+    file_path   = "${path.cwd}../4-vault/log/audit.log"
+    description = "Example file audit device"
+  }
 }
 
 # -----------------------------------------------------------------------
