@@ -129,10 +129,11 @@ resource "docker_container" "kibana" {
 
 resource "null_resource" "util" {
 
-  // Copy the CA certificate to the necessary locations for subsequent steps
-  // Need to sleep and wait for Elasticsearch container to settle.
+  // Need to wait for Elasticsearch container availability before
+  // copying the CA certificate to the necessary locations
+  // for subsequent steps.
   provisioner "local-exec" {
-    command = "echo 'Waiting for Elasticsearch container';until $(curl --output /dev/null --silent --head --fail http://localhost:5601); do printf '.' sleep 5 done"
+    command = "printf 'Waiting for Elasticsearch API ';until $(curl --output /dev/null --silent --head --fail http://localhost:5601); do printf '.' sleep 5;done;sleep 5"
   }
 
   provisioner "local-exec" {
