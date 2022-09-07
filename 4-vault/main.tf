@@ -19,7 +19,7 @@ variable "docker_host" {
 }
 
 variable "vault_version" {
-  default = "1.11.0"
+  default = "1.11.3"
 }
 
 # -----------------------------------------------------------------------

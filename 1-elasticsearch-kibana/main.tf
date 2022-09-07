@@ -133,7 +133,7 @@ resource "null_resource" "util" {
   // copying the CA certificate to the necessary locations
   // for subsequent steps.
   provisioner "local-exec" {
-    command = "printf 'Waiting for Elasticsearch API ';until $(curl --output /dev/null --silent --head --fail http://localhost:5601); do printf '.' sleep 5;done;sleep 5"
+    command = "printf 'Waiting for Elasticsearch API ' ; until $(curl --output /dev/null --silent --head --fail http://localhost:5601) ; do printf '.' sleep 5 ; done ; sleep 5"
   }
 
   provisioner "local-exec" {
