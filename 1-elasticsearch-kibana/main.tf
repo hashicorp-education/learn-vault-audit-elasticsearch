@@ -55,7 +55,8 @@ resource "docker_image" "elasticsearch" {
 }
 
 resource "docker_container" "elasticsearch" {
-  name  = "elasticsearch"
+  name  = "learn-elasticsearch"
+  hostname = "elasticsearch"
   image = docker_image.elasticsearch.repo_digest
   env   = ["discovery.type=single-node", "ES_JAVA_OPTS=-Xms1g -Xmx1g", "ELASTIC_PASSWORD=2learnVault", "KIBANA_PASSWORD=2learnVault"]
   rm    = true
