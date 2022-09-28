@@ -55,7 +55,7 @@ resource "docker_image" "elastic-agent" {
 }
 
 resource "docker_container" "elastic-agent" {
-  name  = "learn_labe_elastic_agent"
+  name  = "learn_lab_elastic_agent"
   hostname = "elasticagent"
   image = docker_image.elastic-agent.repo_digest
   env   = ["FLEET_SERVER_ENABLE=true",
