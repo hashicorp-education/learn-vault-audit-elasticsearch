@@ -140,11 +140,11 @@ resource "null_resource" "util" {
   }
 
   provisioner "local-exec" {
-    command = "docker cp elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../2-fleet-agent-bootstrap/cert/ca.pem"
+    command = "docker cp learn-elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../2-fleet-agent-bootstrap/cert/ca.pem"
   }
 
   provisioner "local-exec" {
-    command = "docker cp elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../3-enroll-elastic-agent/cert/ca.pem"
+    command = "docker cp learn-elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../3-enroll-elastic-agent/cert/ca.pem"
   }
 
   depends_on = [
