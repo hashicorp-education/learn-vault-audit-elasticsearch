@@ -42,6 +42,8 @@ provider "vault" {}
 # Audit Device Resources
 # -----------------------------------------------------------------------
 
+/*
+
 resource "vault_audit" "file_audit_device" {
   type = "file"
   path  = "file"
@@ -62,6 +64,8 @@ resource "vault_audit" "socket_audit_device" {
     description = "Socket audit device for Elastic Agent"
   }
 }
+
+*/
 
 # -----------------------------------------------------------------------
 # Policy resources

@@ -73,7 +73,11 @@ resource "docker_container" "vault" {
     host_path      = "${path.cwd}/data"
     container_path = "/vault/data"
   }
+  
+  /*
   provisioner "local-exec" {
     command = "printf 'Waiting for Vault API ' ; until $(curl --output /dev/null --silent --head --fail http://localhost:8200) ; do printf '.' sleep 5 ; done ; sleep 5"
   }
+  */
+
 }
