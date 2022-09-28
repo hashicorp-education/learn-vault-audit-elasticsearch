@@ -57,7 +57,7 @@ resource "docker_image" "elastic-agent" {
 resource "docker_container" "elastic-agent" {
   name  = "elasticagent"
   image = docker_image.elastic-agent.repo_digest
-  env = ["FLEET_SERVER_ENABLE=true",
+  env   = ["FLEET_SERVER_ENABLE=true",
     "FLEET_ENROLL=1",
     "FLEET_SERVER_ELASTICSEARCH_HOST=${var.elasticsearch_host}",
     "FLEET_SERVER_SERVICE_TOKEN=${var.fleet_server_service_token}",
@@ -65,6 +65,7 @@ resource "docker_container" "elastic-agent" {
     "FLEET_SERVER_ELASTICSEARCH_CA=/cert/ca.pem",
     "FLEET_ENROLLMENT_TOKEN=${var.fleet_enrollment_token}"
   ]
+  rm    = true
   networks_advanced {
     name         = "learn-vault"
     ipv4_address = "10.42.42.130"

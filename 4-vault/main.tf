@@ -40,7 +40,7 @@ resource "docker_image" "vault" {
 }
 
 resource "docker_container" "vault" {
-  name     = "vault-openldap-vault"
+  name     = "vault"
   image    = docker_image.vault.repo_digest
   env      = ["SKIP_CHOWN", "VAULT_ADDR=http://0.0.0.0:8200"]
   command  = ["vault", "server", "-dev", "-dev-root-token-id=root", "-dev-listen-address=0.0.0.0:8200"]
