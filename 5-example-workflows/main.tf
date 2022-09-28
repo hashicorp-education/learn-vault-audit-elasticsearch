@@ -167,17 +167,16 @@ resource "vault_generic_secret" "api_key" {
   "secret-key": "4d469453a1ec37ea5888663ce24f0aeff8b72058cb9a68be8134b49b9d93010a"
 }
 EOT
+
+  // Need to wait for secret availability before attempting access, etc.
+  provisioner "local-exec" {
+    command = "printf 'Waiting for secrets engine ' ; until $(curl --output /dev/null --silent --head --fail --header 'X-Vault-Token: root' http://localhost:8200/v1/kv-v2/config) ; do printf '.' sleep 5 ; done ; sleep 5"
+  }
 }
 
 # -----------------------------------------------------------------------
 # Client resources
 # -----------------------------------------------------------------------
-
-// Need to wait for secret availability before attempting access, etc.
-
-provisioner "local-exec" {
-  command = "printf 'Waiting for secrets engine ' ; until $(curl --output /dev/null --silent --head --fail --header 'X-Vault-Token: root' http://localhost:8200/v1/kv-v2/config) ; do printf '.' sleep 5 ; done ; sleep 5"
-}
 
 resource "docker_image" "curl" {
   name         = "curlimages/curl:${var.curl_version}"
