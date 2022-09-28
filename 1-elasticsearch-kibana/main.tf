@@ -81,11 +81,11 @@ resource "docker_container" "elasticsearch" {
   // Cosmetic: two ownership changes suppress warnings emitted when creating
   // the enrollment token with elasticsearch-create-enrollment-token
   provisioner "local-exec" {
-    command = "docker exec -u 0 elasticsearch chown elasticsearch /usr/share/elasticsearch/config/users"
+    command = "docker exec -u 0 learn-elasticsearch chown elasticsearch /usr/share/elasticsearch/config/users"
   }
 
   provisioner "local-exec" {
-    command = "docker exec -u 0 elasticsearch chown elasticsearch /usr/share/elasticsearch/config/users_roles"
+    command = "docker exec -u 0 learn-elasticsearch chown elasticsearch /usr/share/elasticsearch/config/users_roles"
   }
 
   healthcheck {
@@ -107,7 +107,7 @@ resource "docker_image" "kibana" {
 }
 
 resource "docker_container" "kibana" {
-  name  = "kibana"
+  name  = "learn-kibana"
   image = docker_image.kibana.repo_digest
   rm    = true
 
