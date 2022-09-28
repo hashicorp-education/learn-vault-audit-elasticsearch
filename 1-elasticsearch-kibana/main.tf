@@ -40,7 +40,7 @@ provider "docker" {
 # Custom network
 # -----------------------------------------------------------------------
 resource "docker_network" "learn_vault" {
-  name       = "learn-vault"
+  name       = "learn_lab_network"
   attachable = true
   ipam_config { subnet = "10.42.42.0/24" }
 }
@@ -55,7 +55,7 @@ resource "docker_image" "elasticsearch" {
 }
 
 resource "docker_container" "elasticsearch" {
-  name  = "learn-elasticsearch"
+  name  = "learn_lab_elasticsearch"
   hostname = "elasticsearch"
   image = docker_image.elasticsearch.repo_digest
   env   = ["discovery.type=single-node", "ES_JAVA_OPTS=-Xms1g -Xmx1g", "ELASTIC_PASSWORD=2learnVault", "KIBANA_PASSWORD=2learnVault"]
@@ -74,7 +74,7 @@ resource "docker_container" "elasticsearch" {
   }
 
   networks_advanced {
-    name         = "learn-vault"
+    name         = "learn_lab_network"
     ipv4_address = "10.42.42.100"
   }
 
@@ -107,12 +107,12 @@ resource "docker_image" "kibana" {
 }
 
 resource "docker_container" "kibana" {
-  name  = "learn-kibana"
+  name  = "learn_lab_kibana"
   image = docker_image.kibana.repo_digest
   rm    = true
 
   networks_advanced {
-    name         = "learn-vault"
+    name         = "learn_lab_network"
     ipv4_address = "10.42.42.120"
   }
 
@@ -140,11 +140,11 @@ resource "null_resource" "util" {
   }
 
   provisioner "local-exec" {
-    command = "docker cp learn-elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../2-fleet-agent-bootstrap/cert/ca.pem"
+    command = "docker cp learn_lab_elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../2-fleet-agent-bootstrap/cert/ca.pem"
   }
 
   provisioner "local-exec" {
-    command = "docker cp learn-elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../3-enroll-elastic-agent/cert/ca.pem"
+    command = "docker cp learn_lab_elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../3-enroll-elastic-agent/cert/ca.pem"
   }
 
   depends_on = [

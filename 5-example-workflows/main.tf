@@ -184,28 +184,28 @@ resource "docker_image" "curl" {
 }
 
 resource "docker_container" "curl" {
-  name     = "vault-client"
+  name     = "learn_lab_vault_client"
   image    = docker_image.curl.repo_digest
   command  = ["curl", "--silent", "--header 'X-Vault-Token: root'", "http://10.42.42.200:8200/v1/sys/mounts"]
   hostname = "vault-client-1"
   must_run = false
   # rm       = true
   networks_advanced {
-    name         = "learn-vault"
+    name         = "learn_lab_network"
     ipv4_address = "10.42.42.128"
   }
 
 }
 
 resource "docker_container" "curl2" {
-  name     = "vault-client-2"
+  name     = "learn_lab_vault_client_2"
   image    = docker_image.curl.repo_digest
   command  = ["curl", "--silent", "--header 'X-Vault-Token: nope'", "http://10.42.42.200:8200/v1/kv-v2/data/deployment-api-key?version=1"]
   hostname = "vault-client-2"
   must_run = false
   # rm       = true
   networks_advanced {
-    name         = "learn-vault"
+    name         = "learn_lab_network"
     ipv4_address = "10.42.42.50"
   }
 

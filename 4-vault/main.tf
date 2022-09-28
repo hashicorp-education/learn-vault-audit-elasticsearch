@@ -48,7 +48,7 @@ resource "docker_image" "vault" {
 }
 
 resource "docker_container" "vault" {
-  name     = "learn-vault"
+  name     = "learn_lab_vault"
   image    = docker_image.vault.repo_digest
   env      = ["SKIP_CHOWN", "VAULT_ADDR=http://0.0.0.0:8200"]
   command  = ["vault", "server", "-dev", "-dev-root-token-id=root", "-dev-listen-address=0.0.0.0:8200"]
@@ -70,7 +70,7 @@ resource "docker_container" "vault" {
     protocol = "tcp"
   }
   networks_advanced {
-    name         = "learn-vault"
+    name         = "learn_lab_network"
     ipv4_address = "10.42.42.200"
   }
   volumes {

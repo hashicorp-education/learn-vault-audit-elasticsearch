@@ -55,7 +55,7 @@ resource "docker_image" "elastic-agent" {
 }
 
 resource "docker_container" "elastic-agent" {
-  name  = "learn-elastic-agent"
+  name  = "learn_labe_elastic_agent"
   hostname = "elasticagent"
   image = docker_image.elastic-agent.repo_digest
   env   = ["FLEET_SERVER_ENABLE=true",
@@ -68,7 +68,7 @@ resource "docker_container" "elastic-agent" {
   ]
   rm    = true
   networks_advanced {
-    name         = "learn-vault"
+    name         = "learn_lab_network"
     ipv4_address = "10.42.42.130"
   }
   volumes {
