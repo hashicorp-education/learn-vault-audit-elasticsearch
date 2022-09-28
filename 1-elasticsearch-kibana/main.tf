@@ -81,11 +81,11 @@ resource "docker_container" "elasticsearch" {
   // Cosmetic: two ownership changes suppress warnings emitted when creating
   // the enrollment token with elasticsearch-create-enrollment-token
   provisioner "local-exec" {
-    command = "docker exec -u 0 learn-elasticsearch chown elasticsearch /usr/share/elasticsearch/config/users"
+    command = "docker exec -u 0 learn_lab_elasticsearch chown elasticsearch /usr/share/elasticsearch/config/users"
   }
 
   provisioner "local-exec" {
-    command = "docker exec -u 0 learn-elasticsearch chown elasticsearch /usr/share/elasticsearch/config/users_roles"
+    command = "docker exec -u 0 learn_lab_elasticsearch chown elasticsearch /usr/share/elasticsearch/config/users_roles"
   }
 
   healthcheck {
