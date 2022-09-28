@@ -200,7 +200,7 @@ resource "docker_container" "curl" {
 resource "docker_container" "curl2" {
   name     = "vault-client-2"
   image    = docker_image.curl.repo_digest
-  command  = ["curl", "--silent", "--header 'X-Vault-Token: nope'", "http://10.42.42.200:8200/v1/kv-v2/data/api-key?version=1"]
+  command  = ["curl", "--silent", "--header 'X-Vault-Token: nope'", "http://10.42.42.200:8200/v1/kv-v2/data/deployment-api-key?version=1"]
   hostname = "vault-client-2"
   must_run = false
   # rm       = true
