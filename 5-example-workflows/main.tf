@@ -170,7 +170,7 @@ EOT
 
   // Need to wait for secret availability before attempting access, etc.
   provisioner "local-exec" {
-    command = "printf 'Waiting for secrets engine ' ; until $(curl --output /dev/null --silent --head --fail --header 'X-Vault-Token: root' http://localhost:8200/v1/kv-v2/config) ; do printf '.' sleep 5 ; done ; sleep 5"
+    command = "printf 'Waiting for secrets engine ' ; until $(curl --request GET --output /dev/null --silent --head --fail --header 'X-Vault-Token: root' http://localhost:8200/v1/kv-v2/config) ; do printf '.' sleep 5 ; done ; sleep 5"
   }
 }
 
