@@ -30,6 +30,14 @@ provider "docker" {
   host = var.docker_host
 }
 
+# Vault provider is expected to be configured through the
+# following environment variables:
+#
+# VAULT_ADDR
+# VAULT_TOKEN
+
+provider "vault" {}
+
 # -----------------------------------------------------------------------
 # Vault resources
 # -----------------------------------------------------------------------
@@ -72,5 +80,30 @@ resource "docker_container" "vault" {
   volumes {
     host_path      = "${path.cwd}/data"
     container_path = "/vault/data"
+  }
+}
+
+# -----------------------------------------------------------------------
+# Audit Device Resources
+# -----------------------------------------------------------------------
+
+resource "vault_audit" "file_audit_device" {
+  type = "file"
+  path  = "file"
+
+  options = {
+    file_path   = "/vault/logs/vault-audit.log"
+    description = "File audit device"
+  }
+}
+
+resource "vault_audit" "socket_audit_device" {
+  type = "socket"
+  path  = "socket_elastic_agent"
+
+  options = {
+    address     = "10.42.42.130:9007"
+    socket_type = "tcp"
+    description = "Socket audit device for Elastic Agent"
   }
 }
