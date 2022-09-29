@@ -18,9 +18,10 @@ variable "docker_host" {
   default = "unix:///var/run/docker.sock"
 }
 
-variable "curl_version" {
-  default = "7.84.0"
+variable "vault_version" {
+  default = "1.11.3"
 }
+
 
 # -----------------------------------------------------------------------
 # Provider configuration
@@ -160,7 +161,7 @@ resource "vault_mount" "kv_v2" {
 }
 
 resource "vault_generic_secret" "api_key" {
-  path = "kv-v2/deployment-api-key"
+  path = "kv-v2/data/deployment-api-key"
   data_json = <<EOT
 {
   "access-key": "ea5b3f004d57d48e69ff581798ec0399",
@@ -175,38 +176,64 @@ EOT
 }
 
 # -----------------------------------------------------------------------
-# Client resources
+# Vault client resources
 # -----------------------------------------------------------------------
 
-resource "docker_image" "curl" {
-  name         = "curlimages/curl:${var.curl_version}"
+resource "docker_image" "vault" {
+  name         = "vault:${var.vault_version}"
   keep_locally = true
 }
 
-resource "docker_container" "curl" {
-  name     = "learn_lab_vault_client"
-  image    = docker_image.curl.repo_digest
-  command  = ["curl", "--silent", "--header 'X-Vault-Token: root'", "http://10.42.42.200:8200/v1/sys/mounts"]
-  hostname = "vault-client-1"
+# List secrets engines OK
+resource "docker_container" "vault_client_0" {
+  name     = "learn_lab_vault_client_0"
+  image    = docker_image.vault.repo_digest
+  env      = ["SKIP_CHOWN", "VAULT_ADDR=http://10.42.42.200:8200", "VAULT_TOKEN=root"]
+  command  = ["vault", "secrets", "list"]
+  hostname = "vault-client-0"
   must_run = false
-  # rm       = true
+  rm       = true
+  capabilities {
+    add = ["IPC_LOCK"]
+  }
   networks_advanced {
     name         = "learn_lab_network"
     ipv4_address = "10.42.42.128"
   }
-
 }
 
-resource "docker_container" "curl2" {
-  name     = "learn_lab_vault_client_2"
-  image    = docker_image.curl.repo_digest
-  command  = ["curl", "--silent", "--header 'X-Vault-Token: nope'", "http://10.42.42.200:8200/v1/kv-v2/data/deployment-api-key?version=1"]
-  hostname = "vault-client-2"
+# Get K/V secret NOT OK
+resource "docker_container" "vault_client_1" {
+  name     = "learn_lab_vault_client_1"
+  image    = docker_image.vault.repo_digest
+  env      = ["SKIP_CHOWN", "VAULT_ADDR=http://10.42.42.200:8200", "VAULT_TOKEN=bogus"]
+  command  = ["vault", "kv", "get", "kv-v2/deployment-api-key"]
+  hostname = "vault-client-1"
   must_run = false
-  # rm       = true
+  rm       = true
+  capabilities {
+    add = ["IPC_LOCK"]
+  }
   networks_advanced {
     name         = "learn_lab_network"
-    ipv4_address = "10.42.42.50"
+    ipv4_address = "10.42.42.222"
   }
+}
 
+# AppRole role access OK
+resource "docker_container" "vault_client_2" {
+  name     = "learn_lab_vault_client_2"
+  image    = docker_image.vault.repo_digest
+  env      = ["SKIP_CHOWN", "VAULT_ADDR=http://10.42.42.200:8200", "VAULT_TOKEN=bogus"]
+  command  = ["vault", "read", "auth/approle/role/learn-role"]
+  hostname = "vault-client-2"
+  must_run = false
+  rm       = true
+  capabilities {
+    add = ["IPC_LOCK"]
+  }
+  networks_advanced {
+    name         = "learn_lab_network"
+    ipv4_address = "10.42.42.24"
+  }
 }
