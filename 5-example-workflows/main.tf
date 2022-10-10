@@ -160,8 +160,14 @@ resource "vault_mount" "kv_v2" {
   description = "Example KV version 2 secrets engine"
 }
 
+resource "vault_mount" "api_credentials" {
+  path        = "api-credentials"
+  type        = "kv-v2"
+  description = "Example KV version 2 secrets engine"
+}
+
 resource "vault_generic_secret" "api_key" {
-  path = "api-credentials/api-key"
+  path = "api-credentials/deployment-api-key"
 
   data_json = <<EOT
 {
@@ -170,9 +176,8 @@ resource "vault_generic_secret" "api_key" {
 }
 EOT
   depends_on = [
-    vault_mount.kv-v2
+    vault_mount.kv_v2
   ]
-}
 
   // Need to wait for secret availability before attempting access, etc.
   provisioner "local-exec" {
@@ -212,7 +217,7 @@ resource "docker_container" "vault_client_1" {
   name     = "learn_lab_vault_client_1"
   image    = docker_image.vault.repo_digest
   env      = ["SKIP_CHOWN", "VAULT_ADDR=http://10.42.42.200:8200", "VAULT_TOKEN=bogus"]
-  command  = ["vault", "kv", "get", "kv-v2/deployment-api-key"]
+  command  = ["vault", "kv", "get", "api-credentials/deployment-api-key"]
   hostname = "vault-client-1"
   must_run = false
   rm       = true
@@ -257,6 +262,6 @@ resource "docker_container" "vault_client_3" {
   }
   networks_advanced {
     name         = "learn_lab_network"
-    ipv4_address = "10.42.42.222"
+    ipv4_address = "10.42.42.111"
   }
 }
