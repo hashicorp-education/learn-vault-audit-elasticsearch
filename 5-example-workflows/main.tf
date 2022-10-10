@@ -161,7 +161,7 @@ resource "vault_mount" "kv_v2" {
 }
 
 resource "vault_generic_secret" "api_key" {
-  path = "kv-v2/data/deployment-api-key"
+  path = "kv-v2/deployment-api-key"
   data_json = <<EOT
 {
   "access-key": "ea5b3f004d57d48e69ff581798ec0399",
