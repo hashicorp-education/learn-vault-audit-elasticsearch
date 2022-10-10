@@ -161,13 +161,18 @@ resource "vault_mount" "kv_v2" {
 }
 
 resource "vault_generic_secret" "api_key" {
-  path = "kv-v2/deployment-api-key"
+  path = "api-credentials/api-key"
+
   data_json = <<EOT
 {
-  "access-key": "ea5b3f004d57d48e69ff581798ec0399",
-  "secret-key": "4d469453a1ec37ea5888663ce24f0aeff8b72058cb9a68be8134b49b9d93010a"
+  "api-client-key": "api-eyj2LqNPIlgk7M616Tg",
+  "api-secret-key": "V9QZ8l6xzhZGkq8jsUjpwvRMIWLRIMGWgnNqSWwT0gU2"
 }
 EOT
+  depends_on = [
+    vault_mount.kv-v2
+  ]
+}
 
   // Need to wait for secret availability before attempting access, etc.
   provisioner "local-exec" {
@@ -235,5 +240,23 @@ resource "docker_container" "vault_client_2" {
   networks_advanced {
     name         = "learn_lab_network"
     ipv4_address = "10.42.42.24"
+  }
+}
+
+# Unwrap token NOT OK
+resource "docker_container" "vault_client_3" {
+  name     = "learn_lab_vault_client_3"
+  image    = docker_image.vault.repo_digest
+  env      = ["SKIP_CHOWN", "VAULT_ADDR=http://10.42.42.200:8200", "VAULT_TOKEN=bogus"]
+  command  = ["vault", "unwrap", "hvs.CAESIIQWw1DuWkRbt--MoYMm_fXHMJz4b3klr5CwSWtWwW3RGh4KHGh2cy4ydmU5OTcxOFhWcEo1OWlJWkdhU2hGR1k"]
+  hostname = "vault-client-3"
+  must_run = false
+  rm       = true
+  capabilities {
+    add = ["IPC_LOCK"]
+  }
+  networks_advanced {
+    name         = "learn_lab_network"
+    ipv4_address = "10.42.42.222"
   }
 }
