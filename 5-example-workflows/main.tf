@@ -216,7 +216,7 @@ resource "vault_generic_secret" "research_credentials" {
   data_json = <<EOT
 {
   "api-client-key": "api-eZqjuMIe4Du4sCu0x",
-  "api-secret-key": "P02dguBm67GxdtFD30D8aP6h2kTedc5Xes2YbpG6im8"
+  "api-secret-key": "P0x2dguBm67GxdtFD30D8aP6h2kTedc5Xes2YbpG6im8"
 }
 EOT
   depends_on = [
