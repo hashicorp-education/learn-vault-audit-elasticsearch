@@ -43,7 +43,18 @@ provider "vault" {}
 # Policy resources
 # -----------------------------------------------------------------------
 
-resource "vault_policy" "admins" {
+resource "vault_policy" "research" {
+  name = "research"
+
+  policy = <<EOT
+# Create and manage  auth methods.
+path "sys/auth/*" {
+  capabilities = ["create", "update", "delete", "sudo"]
+}
+EOT
+}
+
+resource "vault_policy" "dev_team" {
   name = "dev-team"
 
   policy = <<EOT
@@ -122,7 +133,7 @@ resource "vault_auth_backend" "userpass" {
 resource "vault_approle_auth_backend_role" "learn" {
   backend        = vault_auth_backend.approle.path
   role_name      = "learn-role"
-  token_policies = ["default", "dev", "prod"]
+  token_policies = ["default", "research"]
 }
 
 resource "vault_approle_auth_backend_role_secret_id" "id" {
@@ -144,8 +155,22 @@ resource "vault_generic_endpoint" "admin" {
 
   data_json = <<EOT
 {
-  "policies": ["admins"],
+  "policies": ["dev-team"],
   "password": "superS3cret!"
+}
+EOT
+}
+
+# Create a user, 'research'
+resource "vault_generic_endpoint" "research" {
+  depends_on           = [vault_auth_backend.userpass]
+  path                 = "auth/userpass/users/research"
+  ignore_absent_fields = true
+
+  data_json = <<EOT
+{
+  "policies": ["research"],
+  "password": "n0t00@s3cr37"
 }
 EOT
 }
@@ -183,6 +208,21 @@ EOT
   provisioner "local-exec" {
     command = "printf 'Waiting for secrets engine ' ; until $(curl --request GET --output /dev/null --silent --head --fail --header 'X-Vault-Token: root' http://localhost:8200/v1/kv-v2/config) ; do printf '.' sleep 5 ; done ; sleep 5"
   }
+}
+
+resource "vault_generic_secret" "research_credentials" {
+  path = "api-credentials/research-credentials"
+
+  data_json = <<EOT
+{
+  "api-client-key": "api-eZqjuMIe4Du4sCu0x",
+  "api-secret-key": "P02dguBm67GxdtFD30D8aP6h2kTedc5Xes2YbpG6im8"
+}
+EOT
+  depends_on = [
+    vault_mount.kv_v2
+  ]
+
 }
 
 # -----------------------------------------------------------------------
@@ -263,5 +303,23 @@ resource "docker_container" "vault_client_3" {
   networks_advanced {
     name         = "learn_lab_network"
     ipv4_address = "10.42.42.111"
+  }
+}
+
+# Compromised host
+resource "docker_container" "vault_client_4" {
+  name     = "learn_lab_vault_client_4"
+  image    = docker_image.vault.repo_digest
+  env      = ["SKIP_CHOWN", "VAULT_ADDR=http://10.42.42.200:8200"]
+  command  = ["vault", "login", "-method=userpass", "username=research", "password=n0t00@s3cr37"]
+  hostname = "vault-client-4"
+  must_run = false
+  rm       = true
+  capabilities {
+    add = ["IPC_LOCK"]
+  }
+  networks_advanced {
+    name         = "learn_lab_network"
+    ipv4_address = "10.42.42.199"
   }
 }
