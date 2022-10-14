@@ -323,3 +323,21 @@ resource "docker_container" "vault_client_4" {
     ipv4_address = "10.42.42.199"
   }
 }
+
+# Userpass login NOT OK
+resource "docker_container" "vault_client_5" {
+  name     = "learn_lab_vault_client_5"
+  image    = docker_image.vault.repo_digest
+  env      = ["SKIP_CHOWN", "VAULT_ADDR=http://10.42.42.200:8200"]
+  command  = ["vault", "login", "-method=userpass", "username=research", "password=bogus"]
+  hostname = "vault-client-5"
+  must_run = false
+  rm       = true
+  capabilities {
+    add = ["IPC_LOCK"]
+  }
+  networks_advanced {
+    name         = "learn_lab_network"
+    ipv4_address = "10.42.42.102"
+  }
+}
