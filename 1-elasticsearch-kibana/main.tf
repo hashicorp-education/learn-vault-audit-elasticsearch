@@ -132,7 +132,7 @@ resource "docker_container" "kibana" {
 
 resource "null_resource" "util" {
 
-  // Need to wait for Elasticsearch container availability before
+  // Wait for Elasticsearch container availability before
   // copying the CA certificate to the necessary locations
   // for subsequent steps.
   provisioner "local-exec" {
