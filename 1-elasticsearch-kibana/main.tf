@@ -78,7 +78,7 @@ resource "docker_container" "elasticsearch" {
     ipv4_address = "10.42.42.100"
   }
 
-  // Cosmetic: two ownership changes suppress warnings emitted when creating
+  // Cosmetic: these ownership changes suppress warnings emitted when creating
   // the enrollment token with elasticsearch-create-enrollment-token
   provisioner "local-exec" {
     command = "docker exec -u 0 learn_lab_elasticsearch chown elasticsearch /usr/share/elasticsearch/config/users"

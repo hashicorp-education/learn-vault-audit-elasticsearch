@@ -2,6 +2,7 @@
 # Vault Learn lab: Audit Device Incident Response with Elasticsearch
 #
 # Docker container environment configuration for Vault
+# Also starts a PostgreSQL container as a dependency for dynamic secrets
 #------------------------------------------------------------------------
 
 terraform {
@@ -19,7 +20,7 @@ variable "docker_host" {
 }
 
 variable "vault_version" {
-  default = "1.11.3"
+  default = "1.12.0"
 }
 
 # -----------------------------------------------------------------------

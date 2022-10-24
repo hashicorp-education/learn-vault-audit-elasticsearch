@@ -2,6 +2,7 @@
 # Vault Learn lab: Audit Device Incident Response with Elasticsearch
 #
 # Docker container environment configuration for example scenarios
+# plus PostgreSQL container and related configuration
 #------------------------------------------------------------------------
 
 terraform {
@@ -18,8 +19,12 @@ variable "docker_host" {
   default = "unix:///var/run/docker.sock"
 }
 
+variable "postgres_version" {
+  default = "15.0-alpine"
+}
+
 variable "vault_version" {
-  default = "1.11.3"
+  default = "1.12.0"
 }
 
 
@@ -40,6 +45,33 @@ provider "docker" {
 provider "vault" {}
 
 # -----------------------------------------------------------------------
+# PostgresSQL resources
+# -----------------------------------------------------------------------
+
+resource "docker_image" "postgres" {
+  name         = "postgres:${var.postgres_version}"
+  keep_locally = true
+}
+
+resource "docker_container" "postgres" {
+  name     = "learn_lab_postgres"
+  image    = docker_image.postgres.repo_digest
+  env      = ["POSTGRES_USER=root", "POSTGRES_PASSWORD=rootpassword"]
+  hostname = "postgres"
+  must_run = true
+  networks_advanced {
+    name         = "learn_lab_network"
+    ipv4_address = "10.42.42.252"
+  }
+
+  // Create role and grant
+  provisioner "local-exec" {
+    command = "sleep 5;docker exec -i learn_lab_postgres psql -U root -c \"CREATE ROLE \"ro\" NOINHERIT;\" ; docker exec -i learn_lab_postgres psql -U root -c \"GRANT SELECT ON ALL TABLES IN SCHEMA public TO \"ro\";\""
+  }
+
+}
+
+# -----------------------------------------------------------------------
 # Policy resources
 # -----------------------------------------------------------------------
 
@@ -50,6 +82,17 @@ resource "vault_policy" "research" {
 # Create and manage  auth methods.
 path "sys/auth/*" {
   capabilities = ["create", "update", "delete", "sudo"]
+}
+EOT
+}
+
+resource "vault_policy" "databases" {
+  name = "databases"
+
+  policy = <<EOT
+# Create and manage  auth methods.
+path "postgres/+/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
 }
 EOT
 }
@@ -161,6 +204,20 @@ resource "vault_generic_endpoint" "admin" {
 EOT
 }
 
+# Create a user, 'dba'
+resource "vault_generic_endpoint" "dba" {
+  depends_on           = [vault_auth_backend.userpass]
+  path                 = "auth/userpass/users/research"
+  ignore_absent_fields = true
+
+  data_json = <<EOT
+{
+  "policies": ["databases"],
+  "password": "Da4ta^Bass"
+}
+EOT
+}
+
 # Create a user, 'research'
 resource "vault_generic_endpoint" "research" {
   depends_on           = [vault_auth_backend.userpass]
@@ -179,12 +236,6 @@ EOT
 # Secrets engine resources
 # -----------------------------------------------------------------------
 
-resource "vault_mount" "kv_v2" {
-  path        = "kv-v2"
-  type        = "kv-v2"
-  description = "Example KV version 2 secrets engine"
-}
-
 resource "vault_mount" "api_credentials" {
   path        = "api-credentials"
   type        = "kv-v2"
@@ -201,12 +252,12 @@ resource "vault_generic_secret" "api_key" {
 }
 EOT
   depends_on = [
-    vault_mount.kv_v2
+    vault_mount.api_credentials
   ]
 
   // Need to wait for secret availability before attempting access, etc.
   provisioner "local-exec" {
-    command = "printf 'Waiting for secrets engine ' ; until $(curl --request GET --output /dev/null --silent --head --fail --header 'X-Vault-Token: root' http://localhost:8200/v1/kv-v2/config) ; do printf '.' sleep 5 ; done ; sleep 5"
+    command = "printf 'Waiting for secrets engine ' ; until $(curl --request GET --output /dev/null --silent --head --fail --header 'X-Vault-Token: root' http://localhost:8200/v1/api-credentials/config) ; do printf '.' sleep 5 ; done"
   }
 }
 
@@ -220,9 +271,76 @@ resource "vault_generic_secret" "research_credentials" {
 }
 EOT
   depends_on = [
-    vault_mount.kv_v2
+    vault_mount.api_credentials
   ]
 
+}
+
+resource "vault_mount" "db" {
+  path = "postgres"
+  type = "database"
+  depends_on = [
+    docker_container.postgres
+  ]
+}
+
+resource "vault_database_secret_backend_connection" "postgres" {
+  backend       = vault_mount.db.path
+  name          = "postgres"
+  allowed_roles = ["dev"]
+
+  postgresql {
+    connection_url = "postgresql://{{username}}:{{password}}@10.42.42.252:5432/postgres?sslmode=disable"
+    username       = "root"
+    password       = "rootpassword"
+  }
+  depends_on = [
+    docker_container.postgres
+  ]
+}
+
+resource "vault_database_secret_backend_role" "role" {
+  backend             = vault_mount.db.path
+  name                = "dev"
+  db_name             = vault_database_secret_backend_connection.postgres.name
+  creation_statements = ["Q1JFQVRFIFJPTEUgInt7bmFtZX19IiBXSVRIIExPR0lOIFBBU1NXT1JEICd7e3Bhc3N3b3JkfX0nIFZBTElEIFVOVElMICd7e2V4cGlyYXRpb259fScgSU5IRVJJVDtHUkFOVCBybyBUTyAie3tuYW1lfX0iOw=="]
+  depends_on = [
+    docker_container.postgres
+  ]
+}
+
+# -----------------------------------------------------------------------
+# Token resources
+# -----------------------------------------------------------------------
+
+resource "vault_token_auth_backend_role" "dba_token_role" {
+  role_name              = "dba"
+  allowed_policies       = ["databases"]
+  allowed_entity_aliases = ["dba_entity"]
+  orphan                 = true
+  token_period           = "86400"
+  renewable              = true
+  token_explicit_max_ttl = "115200"
+  path_suffix            = "dba-token"
+}
+
+resource "vault_token" "dba_token" {
+  role_name = "${vault_token_auth_backend_role.dba_token_role.role_name}"
+
+  policies = ["databases"]
+
+  renewable = true
+  ttl = "24h"
+
+  renew_min_lease = 43200
+  renew_increment = 86400
+
+  metadata = {
+    "purpose" = "Database administration"
+  }
+  depends_on = [
+    vault_token_auth_backend_role.dba_token_role
+  ]
 }
 
 # -----------------------------------------------------------------------
@@ -243,9 +361,6 @@ resource "docker_container" "vault_client_0" {
   hostname = "vault-client-0"
   must_run = false
   rm       = true
-  capabilities {
-    add = ["IPC_LOCK"]
-  }
   networks_advanced {
     name         = "learn_lab_network"
     ipv4_address = "10.42.42.128"
@@ -261,9 +376,6 @@ resource "docker_container" "vault_client_1" {
   hostname = "vault-client-1"
   must_run = false
   rm       = true
-  capabilities {
-    add = ["IPC_LOCK"]
-  }
   networks_advanced {
     name         = "learn_lab_network"
     ipv4_address = "10.42.42.222"
@@ -279,9 +391,6 @@ resource "docker_container" "vault_client_2" {
   hostname = "vault-client-2"
   must_run = false
   rm       = true
-  capabilities {
-    add = ["IPC_LOCK"]
-  }
   networks_advanced {
     name         = "learn_lab_network"
     ipv4_address = "10.42.42.24"
@@ -297,9 +406,6 @@ resource "docker_container" "vault_client_3" {
   hostname = "vault-client-3"
   must_run = false
   rm       = true
-  capabilities {
-    add = ["IPC_LOCK"]
-  }
   networks_advanced {
     name         = "learn_lab_network"
     ipv4_address = "10.42.42.111"
@@ -310,18 +416,18 @@ resource "docker_container" "vault_client_3" {
 resource "docker_container" "vault_client_4" {
   name     = "learn_lab_vault_client_4"
   image    = docker_image.vault.repo_digest
-  env      = ["SKIP_CHOWN", "VAULT_ADDR=http://10.42.42.200:8200"]
-  command  = ["vault", "login", "-method=userpass", "username=research", "password=n0t00@s3cr37"]
+  env      = ["SKIP_CHOWN", "VAULT_ADDR=http://10.42.42.200:8200", "VAULT_TOKEN=${vault_token.dba_token.client_token}"]
+  command  = ["vault", "read", "postgres/creds/dev"]
   hostname = "vault-client-4"
   must_run = false
   rm       = true
-  capabilities {
-    add = ["IPC_LOCK"]
-  }
   networks_advanced {
     name         = "learn_lab_network"
     ipv4_address = "10.42.42.199"
   }
+  depends_on = [
+    vault_database_secret_backend_role.role
+  ]
 }
 
 # Userpass login NOT OK
@@ -333,9 +439,6 @@ resource "docker_container" "vault_client_5" {
   hostname = "vault-client-5"
   must_run = false
   rm       = true
-  capabilities {
-    add = ["IPC_LOCK"]
-  }
   networks_advanced {
     name         = "learn_lab_network"
     ipv4_address = "10.42.42.102"
