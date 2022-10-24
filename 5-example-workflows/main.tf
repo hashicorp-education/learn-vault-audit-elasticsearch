@@ -66,7 +66,7 @@ resource "docker_container" "postgres" {
 
   // Create role and grant
   provisioner "local-exec" {
-    command = "sleep 5;docker exec -i learn_lab_postgres psql -U root -c \"CREATE ROLE \"ro\" NOINHERIT;\" ; docker exec -i learn_lab_postgres psql -U root -c \"GRANT SELECT ON ALL TABLES IN SCHEMA public TO \"ro\";\""
+    command = "sleep 10;docker exec -i learn_lab_postgres psql -U root -c \"CREATE ROLE \"ro\" NOINHERIT;\" ; docker exec -i learn_lab_postgres psql -U root -c \"GRANT SELECT ON ALL TABLES IN SCHEMA public TO \"ro\";\""
   }
 
 }
