@@ -136,11 +136,11 @@ resource "null_resource" "util" {
   // copying the CA certificate to the necessary locations
   // for subsequent steps.
   provisioner "local-exec" {
-    command = "printf 'Waiting for Elasticsearch API ' ; until $(curl --output /dev/null --silent --head --fail http://localhost:5601) ; do printf '.' sleep 10 ; done ; sleep 5"
+    command = "printf 'Waiting for Elasticsearch API ' ; until $(curl --output /dev/null --silent --head --fail http://localhost:5601) ; do printf '.' sleep 10 ; done"
   }
 
   provisioner "local-exec" {
-    command = "docker cp learn_lab_elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../2-fleet-agent-bootstrap/cert/ca.pem"
+    command = "sleep 5 ;docker cp learn_lab_elasticsearch:/usr/share/elasticsearch/config/certs/http_ca.crt ../2-fleet-agent-bootstrap/cert/ca.pem"
   }
 
   provisioner "local-exec" {
