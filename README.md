@@ -1,7 +1,7 @@
-# Use Vault Audit Device for Incident Response with Elasticsearch
+# Use Vault audit device for incident response with Elasticsearch
 
-This repository content is required to support the tasks described in the following tutorials:
+This repository content supports the tasks described in the following tutorials:
 
-- [Audit Device Logs and Incident Response with Elasticsearch](https://learn.hashicorp.com/tutorials/vault/audit-device-with-elasticsearch)
+- [Audit Vault with Elasticsearch for incident response](https://developer.hashicorp.com/vault/tutorials/operations/audit-elastic-incident-response)
 
 Refer to the tutorial for details on how to use this configuration.
