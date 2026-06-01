@@ -43,7 +43,7 @@ resource "docker_image" "vault" {
 resource "docker_container" "vault" {
   name     = "learn_lab_vault"
   image    = docker_image.vault.repo_digest
-  env      = ["SKIP_CHOWN", "VAULT_ADDR=http://0.0.0.0:8200"]
+  env      = ["SKIP_CHOWN", "SKIP_SETCAP=1", "VAULT_ADDR=http://0.0.0.0:8200"]
   command  = ["vault", "server", "-dev", "-dev-root-token-id=root", "-dev-listen-address=0.0.0.0:8200"]
   hostname = "vault"
   must_run = true
@@ -74,7 +74,7 @@ resource "docker_container" "vault" {
     host_path      = "${path.cwd}/data"
     container_path = "/vault/data"
   }
-  
+
   /*
   provisioner "local-exec" {
     command = "printf 'Waiting for Vault API ' ; until $(curl --output /dev/null --silent --head --fail http://localhost:8200) ; do printf '.' sleep 5 ; done ; sleep 5"
